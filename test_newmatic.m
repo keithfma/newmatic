@@ -48,16 +48,30 @@ function check(testCase, fname, vars)
 
 end
 
-function test_variable_size_single(testCase)
-    % confirm newmatic with only variable name and size inputs
-    fname = testCase.TestData.filename;
-    var = newmatic_variable('x', 'single', [10, 20, 30], []);
-    
+
+function test_single_variable_nosize_nochunks(testCase)
+    fname = testCase.TestData.filename;    
+    var = newmatic_variable('x', 'single');
     newmatic(fname, var);
     check(testCase, fname, var);
-    
 end
     
+
+function test_single_variable_nochunks(testCase)
+    fname = testCase.TestData.filename;    
+    var = newmatic_variable('x', 'single', [10, 20, 30]);
+    newmatic(fname, var);
+    check(testCase, fname, var);
+end
+
+
+function test_single_variable(testCase)
+    fname = testCase.TestData.filename;    
+    var = newmatic_variable('x', 'single', [10, 20, 30], [10, 10, 10]);
+    newmatic(fname, var);
+    check(testCase, fname, var);
+end
+
 
 % TODO: add tests for newmatic_variable
 

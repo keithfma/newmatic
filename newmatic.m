@@ -58,6 +58,12 @@ switch data_type
         error('Bad value for data_type: %s', data_type);
 end
 
-file_obj.(var_name) = empty(zeros(size(dimensions)));
-dimensions = num2cell(dimensions);
-file_obj.(var_name)(dimensions{:}) = last;
+if ~isempty(dimensions) 
+    file_obj.(var_name) = empty(zeros(size(dimensions)));
+    dimensions = num2cell(dimensions);
+    file_obj.(var_name)(dimensions{:}) = last;
+else
+    % handle unspecified size by creating an empty array of the correct type
+    file_obj.(var_name) = empty();
+end
+
