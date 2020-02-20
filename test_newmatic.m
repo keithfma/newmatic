@@ -49,6 +49,9 @@ function check(testCase, fname, vars)
 end
 
 
+% TODO: test overwrite protection
+
+
 function test_single_variable_nosize_nochunks(testCase)
     fname = testCase.TestData.filename;    
     var = newmatic_variable('x', 'single');
@@ -73,5 +76,37 @@ function test_single_variable(testCase)
 end
 
 
+function test_multi_variable_nosize_nochunks(testCase)
+    fname = testCase.TestData.filename;
+    vars = {...
+        newmatic_variable('x', 'uint8'), ...
+        newmatic_variable('y', 'single'), ...
+        newmatic_variable('z', 'double')};
+    newmatic(fname, vars{:});
+    check(testCase, fname, cell2mat(vars));
+end
+        
+
+function test_multi_variable_nochunks(testCase)
+    fname = testCase.TestData.filename;
+    vars = {...
+        newmatic_variable('x', 'uint8', [30, 20]), ...
+        newmatic_variable('y', 'single', [5, 10]), ...
+        newmatic_variable('z', 'double', [40, 50, 10])};
+    newmatic(fname, vars{:});
+    check(testCase, fname, cell2mat(vars));
+end
+   
+
+function test_multi_variable(testCase)
+    fname = testCase.TestData.filename;
+    vars = {...
+        newmatic_variable('x', 'uint8', [30, 20], [15, 10]), ...
+        newmatic_variable('y', 'single', [5, 10], [5, 5]), ...
+        newmatic_variable('z', 'double', [40, 50, 10], [10, 10, 10])};
+    newmatic(fname, vars{:});
+    check(testCase, fname, cell2mat(vars));
+end
+   
 % TODO: add tests for newmatic_variable
 
