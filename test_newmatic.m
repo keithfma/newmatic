@@ -31,13 +31,20 @@ function check(testCase, fname, vars)
     
     for ii = 1:length(vars)
         var = vars(ii);
+       
+        % variable exists?
         assertTrue(testCase, in_cell_array(var.name, who(mat)));
-        % if ~isempty(var.sze)
-        %     assertEqual(testCase, length(var.size), length(size(mat, var.name)));
-        %     assertTrue(testCase, all(var.size) == size(mat, var.name));
-        % end
+        
+        % variable data type matches expectations?
+        assertTrue(testCase, strcmp(var.type, class(mat.(var.name))));
+        
+        % variable size matches expectations?
+        if ~isempty(var.size)
+            assertEqual(testCase, length(var.size), length(size(mat, var.name)));
+            assertTrue(testCase, all(var.size == size(mat, var.name)));
+        end
+        
     end
-    
 
 end
 
