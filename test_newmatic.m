@@ -23,6 +23,12 @@ function teardown(testCase)
 end
 
 
+function result = in_cell_array(value, array)
+    % return true if 'value' is found in cell array 'array', else False
+    result = any(cellfun(@(x) strcmp(value, x), array));
+end
+    
+    
 function check(testCase, fname, vars)
     % check that the MAT-file created by newmatic matches expectations
     assertTrue(testCase, isfile(fname));
