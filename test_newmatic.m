@@ -1,4 +1,4 @@
-% Unit tests for newmatic package
+% Unit tests for newmatic function
 %
 % Usage:
 %   results = runtests(test_newmatic.m);
@@ -66,9 +66,6 @@ function check(testCase, fname, vars)
 end
 
 
-% TODO: test overwrite protection
-
-
 function test_single_variable_nosize_nochunks(testCase)
     fname = testCase.TestData.filename;    
     var = newmatic_variable('x', 'single');
@@ -125,5 +122,15 @@ function test_multi_variable(testCase)
     check(testCase, fname, cell2mat(vars));
 end
    
-% TODO: add tests for newmatic_variable
 
+function test_input_validation(testCase)
+    a_var = newmatic_variable('x', 'double');
+
+    % path type incorrect
+    assertError(testCase, @() newmatic(5, a_var), 'MATLAB:invalidType');
+
+    % protect against overwriting
+    fname = testCase.TestData.filename;
+    fclose(fopen(fname, 'w'));  % create file by touching it
+    assertError(testCase, @() newmatic(fname, a_var), 'newmatic:OverwriteError');
+end

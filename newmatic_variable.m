@@ -12,8 +12,6 @@ function var = newmatic_variable(name, data_type, sz, chunks)
 %       be set to [] to skip defining chunk size, default is []
 % %
 
-% TODO: make errors on assertions more informative
-
 SUPPORTED_DATA_TYPES = {
     'single', ...
     'double', ...
@@ -36,17 +34,22 @@ if nargin < 4; chunks = []; end
 
 % sanity checks
 validateattributes(name, {'char'}, {'nonempty'});
+
 validateattributes(data_type, {'char'}, {'nonempty'});
-assert(in_cell_array(data_type, SUPPORTED_DATA_TYPES));
+assert(in_cell_array(data_type, SUPPORTED_DATA_TYPES), ...
+    'newmatic:unknownDataType', 'Unknown data type');
+
 if ~isempty(sz)
     validateattributes(sz, {'numeric'}, {'integer', 'vector'});
 end
+
 if ~isempty(chunks)
     validateattributes(chunks, {'numeric'}, {'integer', 'vector'});
 end
+
 if ~isempty(sz) && ~isempty(chunks)
-    assert(length(sz) == length(chunks));
-    assert(all(size(sz) == size(chunks)));
+    assert(length(sz) == length(chunks), ...
+        'newmatic:MismatchedSizeAndChunks', 'Size and chunks length must match');
 end
 
 var = struct(...

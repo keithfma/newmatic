@@ -12,7 +12,9 @@ function mat = newmatic(path, varargin)
 %   new matfile object with specified variables allocated
 % % 
 
-assert(~isfile(path), 'Output file exists!');
+% sanity checks
+validateattributes(path, {'char'}, {'nonempty'});
+assert(~isfile(path), 'newmatic:OverwriteError', 'Output file exists!');
 
 mat = matfile(path, 'Writable', true);
 
