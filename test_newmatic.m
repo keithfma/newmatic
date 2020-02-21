@@ -29,6 +29,12 @@ function check(testCase, fname, vars)
 
     mat = matfile(fname);
     
+    mat_info = h5info(fname);
+    mat_chunks = containers.Map();
+    for ii = 1:length(mat_info.Datasets)
+        mat_chunks(mat_info.Datasets(ii).Name) = mat_info.Datasets(ii).ChunkSize;
+    end
+    
     for ii = 1:length(vars)
         var = vars(ii);
        
@@ -42,6 +48,11 @@ function check(testCase, fname, vars)
         if ~isempty(var.size)
             assertEqual(testCase, length(var.size), length(size(mat, var.name)));
             assertTrue(testCase, all(var.size == size(mat, var.name)));
+        end
+        
+        % variable chunking matches expectations?
+        if ~isempty(var.chunks)
+            assertTrue(testCase, all(var.chunks == mat_chunks(var.name)));
         end
         
     end

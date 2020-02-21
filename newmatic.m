@@ -16,13 +16,52 @@ assert(~isfile(path), 'Output file exists!');
 
 mat = matfile(path, 'Writable', true);
 
+
 for ii = 1:length(varargin)
     var = varargin{ii};
     allocate(mat, var.name, var.type, var.size);
+
 end
 
-% TODO: second pass to set chunking
+h5repack(mat, varargin);  % TODO: replace with native version when ready
 
+
+function h5repack(file_obj, vars)
+% Apply specified chunking using external utility h5repack
+%
+% note: requires h5repack be installed on system
+%
+% Arguments:
+%   file_obj: matfile object
+%   vars: one or more variable definition structs, as created by 
+%       newmatic_variable(), see help for that function for more details
+% %     
+path = file_obj.Properties.Source;
+
+chunk_args = {};
+for ii = 1:length(vars)
+    var = vars{ii};
+    if ~isempty(var.chunks)
+        chunks = var.chunks(end:-1:1);  % variable dimensions are inverted in HDF file by MATLAB
+        chunk_args{end+1} = sprintf('-l %s:CHUNK=%s', var.name, strjoin(string(chunks), 'x')); %#ok!
+    end
+end
+
+if ~isempty(chunk_args)
+
+    temp_file = [tempname, '.mat'];
+    
+    args = [{'h5repack', '-i', path, '-o', temp_file}, chunk_args];
+    cmd = strjoin(args, ' ');
+    fprintf('%s\n', cmd);
+   
+    status = system(cmd);
+    assert(status == 0, 'Failed to update chunks with h5repack system utility');
+
+    status = movefile(temp_file, path);
+    assert(status == 1, 'Failed to overwrite original file');
+end
+    
 
 function allocate(file_obj, var_name, data_type, dimensions)
 % function allocate(file_obj, var_name, data_type, dimensions)
@@ -66,4 +105,3 @@ else
     % handle unspecified size by creating an empty array of the correct type
     file_obj.(var_name) = empty();
 end
-
