@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>newmatic_demo</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-02-22"><meta name="DC.source" content="newmatic_demo.m"><style type="text/css">
+      --><title>Newmatic</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-02-23"><meta name="DC.source" content="newmatic_demo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,7 +66,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Newmatic: Create new MAT-files optimized for partial reading and writing of large arrays</a></li><li><a href="#2">Complete read/write with native MATLAB tools</a></li><li><a href="#3">Partial read/write with native MATLAB tools</a></li><li><a href="#4">Partial read/write with newmatic</a></li><li><a href="#5">Complete read/write with newmatic</a></li><li><a href="#6">Comparison</a></li></ul></div><h2 id="1">Newmatic: Create new MAT-files optimized for partial reading and writing of large arrays</h2><p>The purpose of this tool is to provide more and easier control over MAT-file formatting. In particular, I had some performance problems with partial IO for large arrays and found the solutions suggested by Mathworks to be pretty clunky. The three features that <tt>newmatic</tt> includes are:</p><div><ol><li>Creating new array variables with a specified type</li><li>Allocating the array size (see <a href="https://www.mathworks.com/help/matlab/import_export/troubleshooting-file-size-increases-unexpectedly-when-growing-an-array.html">here</a>)</li><li>Defining sane chunk sizes (see "Accelerate Save and Load Operations for Version 7.3 MAT-Files" <a href="https://www.mathworks.com/help/matlab/import_export/mat-file-versions.html">here</a>)</li></ol></div><p>For our test case, we will make save a relatively large 3D array to a MAT-file one "page" at a   time, and then read it back in the same way. This tasks mimics the task that inspired me to   write this tool, namely partial reads from a stack of image arrays.</p><p>TLDR: <b>Using newmatic makes partial access roughly the same speed as reading/writing whole variables, and  does not have a significant impact on file size</b>. For this specific example, setting a sane chunk size yields ~20x speedup.</p><p>Note: The fact that read timings are systematically lower than write times is likely an artifact  of data caching in the underlying HDF5 library (see <a href="https://support.hdfgroup.org/HDF5/doc/H5.user/Caching.html">here</a>).  Because we write before reading in this test, we likely end up reading from (fast) cache rather  than (slow) disk. For this reason, the <i>relative</i> times are more important than the absolute  times.</p><p>Here is the test data:</p><pre class="codeinput">num_row = 2000;
+  </style></head><body><div class="content"><h1>Newmatic</h1><!--introduction--><p>Create new MAT-files optimized for partial reading and writing of large arrays</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Overview</a></li><li><a href="#2">Complete read/write with native MATLAB tools</a></li><li><a href="#3">Partial read/write with native MATLAB tools</a></li><li><a href="#4">Partial read/write with newmatic</a></li><li><a href="#5">Complete read/write with newmatic</a></li><li><a href="#6">Comparison</a></li></ul></div><h2 id="1">Overview</h2><p>The purpose of this tool is to provide more and easier control over MAT-file formatting. In particular, I had some performance problems with partial IO for large arrays and found the solutions suggested by Mathworks to be pretty clunky. The three features that <tt>newmatic</tt> includes are:</p><div><ol><li>Creating new array variables with a specified type</li><li>Allocating the array size (see <a href="https://www.mathworks.com/help/matlab/import_export/troubleshooting-file-size-increases-unexpectedly-when-growing-an-array.html">here</a>)</li><li>Defining sane chunk sizes (see "Accelerate Save and Load Operations for Version 7.3 MAT-Files" <a href="https://www.mathworks.com/help/matlab/import_export/mat-file-versions.html">here</a>)</li></ol></div><p>For our test case, we will make save a relatively large 3D array to a MAT-file one "page" at a   time, and then read it back in the same way. This tasks mimics the task that inspired me to   write this tool, namely partial reads from a stack of image arrays.</p><p>TLDR: <b>Using newmatic makes partial access roughly the same speed as reading/writing whole variables, and  does not have a significant impact on file size</b>. For this specific example, setting a sane chunk size yields ~20x speedup.</p><p>Note: The fact that read timings are systematically lower than write times is likely an artifact  of data caching in the underlying HDF5 library (see <a href="https://support.hdfgroup.org/HDF5/doc/H5.user/Caching.html">here</a>).  Because we write before reading in this test, we likely end up reading from (fast) cache rather  than (slow) disk. For this reason, the <i>relative</i> times are more important than the absolute  times.</p><p>Here is the test data:</p><pre class="codeinput">num_row = 2000;
 num_col = 1000;
 num_img = 50;
 
@@ -92,8 +92,8 @@ fprintf(<span class="string">'Native-complete, read: %.3f s\n'</span>, native_co
 
 <span class="comment">% get the file size</span>
 native_complete_file_size = dir(native_complete_file).bytes/1024/1024;
-</pre><pre class="codeoutput">Native-complete, write: 4.830 s
-Native-complete, read: 1.185 s
+</pre><pre class="codeoutput">Native-complete, write: 3.334 s
+Native-complete, read: 0.728 s
 </pre><h2 id="3">Partial read/write with native MATLAB tools</h2><p>Now let's try using native MATLAB matfile() to do read and write the data one image at a time (i.e., partial IO). This is the real use case we are interested in.</p><pre class="codeinput"><span class="comment">% get a temporary file name</span>
 native_partial_file = [tempname, <span class="string">'.mat'</span>];
 native_partial_cleanup = onCleanup(@() delete(native_partial_file));
@@ -124,8 +124,8 @@ fprintf(<span class="string">'Native-partial, read: %.3f s\n'</span>, native_par
 
 <span class="comment">% get the file size</span>
 native_partial_file_size = dir(native_partial_file).bytes/1024/1024;
-</pre><pre class="codeoutput">Native-partial, write: 87.723 s
-Native-partial, read: 5.930 s
+</pre><pre class="codeoutput">Native-partial, write: 52.339 s
+Native-partial, read: 4.126 s
 </pre><h2 id="4">Partial read/write with newmatic</h2><p>Now for the good stuff. Let's use <tt>newmatic</tt> to create our file, and then read and write the data one image at a time. We will choose a chunk size that neatly matches our planned access pattern (i.e, an image).</p><pre class="codeinput"><span class="comment">% get a temporary file name</span>
 newmatic_partial_file = [tempname, <span class="string">'.mat'</span>];
 newmatic_partial_cleanup = onCleanup(@() delete(newmatic_partial_file));
@@ -153,9 +153,9 @@ fprintf(<span class="string">'Newmatic-partial, read: %.3f s\n'</span>, newmatic
 
 <span class="comment">% get the file size</span>
 newmatic_partial_file_size = dir(newmatic_partial_file).bytes/1024/1024;
-</pre><pre class="codeoutput">h5repack -i /tmp/tp4d55dc7e_87c0_4e73_8ca7_f73f20f3768a.mat -o /tmp/tpfb460aaa_6342_44b9_b193_0512c38f2d40.mat -l images:CHUNK=1x1000x2000
-Newmatic-partial, write: 4.865 s
-Newmatic-partial, read: 0.239 s
+</pre><pre class="codeoutput">h5repack -i /tmp/tp03fd088e_f895_4664_81d7_9d2275dd7f72.mat -o /tmp/tpf6e2a598_4fd5_430c_8baf_c2a1aac9cb0e.mat -l images:CHUNK=1x1000x2000
+Newmatic-partial, write: 2.888 s
+Newmatic-partial, read: 0.158 s
 </pre><h2 id="5">Complete read/write with newmatic</h2><p>To round out the comparison, let's read/write whole variables using newmatic</p><pre class="codeinput"><span class="comment">% get a temporary file name</span>
 newmatic_complete_file = [tempname, <span class="string">'.mat'</span>];
 newmatic_complete_cleanup = onCleanup(@() delete(newmatic_complete_file));
@@ -179,9 +179,9 @@ fprintf(<span class="string">'Newmatic-complete, read: %.3f s\n'</span>, newmati
 
 <span class="comment">% get the file size</span>
 newmatic_complete_file_size = dir(newmatic_complete_file).bytes/1024/1024;
-</pre><pre class="codeoutput">h5repack -i /tmp/tpb69605f9_17a5_4710_8211_41c7a151f531.mat -o /tmp/tp6b722149_2af1_4e74_8898_5c09a4ba021a.mat -l images:CHUNK=1x1000x2000
-Newmatic-complete, write: 4.837 s
-Newmatic-complete, read: 1.195 s
+</pre><pre class="codeoutput">h5repack -i /tmp/tp1713a51c_f6d8_4f4c_8639_fca9af5e6594.mat -o /tmp/tp9943cc43_35e2_4cb4_aa30_a39d7a1c3386.mat -l images:CHUNK=1x1000x2000
+Newmatic-complete, write: 3.151 s
+Newmatic-complete, read: 0.709 s
 </pre><h2 id="6">Comparison</h2><p>To make the comparison a bit easier, check out the tabulated results below:</p><pre class="codeinput">results = table(<span class="keyword">...</span>
     round([native_complete_write_time; newmatic_complete_write_time; native_partial_write_time; newmatic_partial_write_time], 2), <span class="keyword">...</span>
     round([native_complete_read_time; newmatic_complete_read_time; native_partial_read_time; newmatic_partial_read_time], 2), <span class="keyword">...</span>
@@ -193,14 +193,18 @@ disp(results);
 </pre><pre class="codeoutput">                         write-time-seconds    read-time-seconds    file-size-MB
                          __________________    _________________    ____________
 
-    native-complete             4.83                 1.18               95.53   
-    newmatic-complete           4.84                 1.19               95.53   
-    native-partial             87.72                 5.93              116.33   
-    newmatic-partial            4.87                 0.24               95.82   
+    native-complete             3.33                 0.73               95.53   
+    newmatic-complete           3.15                 0.71               95.53   
+    native-partial             52.34                 4.13              116.33   
+    newmatic-partial            2.89                 0.16               95.82   
 
 </pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
-%% Newmatic: Create new MAT-files optimized for partial reading and writing of large arrays
+%% Newmatic
+%
+% Create new MAT-files optimized for partial reading and writing of large arrays
+
+%% Overview
 %
 % The purpose of this tool is to provide more and easier control over MAT-file formatting. In
 % particular, I had some performance problems with partial IO for large arrays and found the

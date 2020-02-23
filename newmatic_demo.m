@@ -1,4 +1,8 @@
-%% Newmatic: Create new MAT-files optimized for partial reading and writing of large arrays
+%% Newmatic
+%
+% Create new MAT-files optimized for partial reading and writing of large arrays
+
+%% Overview
 %
 % The purpose of this tool is to provide more and easier control over MAT-file formatting. In
 % particular, I had some performance problems with partial IO for large arrays and found the
