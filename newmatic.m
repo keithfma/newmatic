@@ -1,10 +1,10 @@
-function mat = newmatic(path, varargin)
-% function mat = newmatic(path, varargin)
+function mat = newmatic(out_file, varargin)
+% function mat = newmatic(out_file, varargin)
 % 
 % Create new MAT-file with allocated arrays and specified chunking
 %
 % Arguments:
-%   path: path to the output file to create, will fail if file exists
+%   out_file: path to the output file to create, will fail if file exists
 %   varargin: one or more variable definition structs, as created by 
 %       newmatic_variable(), see help for that function for more details
 %
@@ -13,8 +13,8 @@ function mat = newmatic(path, varargin)
 % % 
 
 % sanity checks
-validateattributes(path, {'char'}, {'nonempty'});
-assert(~isfile(path), 'newmatic:OverwriteError', 'Output file exists!');
+validateattributes(out_file, {'char'}, {'nonempty'});
+assert(~isfile(out_file), 'newmatic:OverwriteError', 'Output file exists!');
 
 % filename for reference .mat, deleted on function exit
 ref_file = [tempname, '.mat'];
@@ -27,15 +27,16 @@ for ii = 1:length(varargin)
 end
 delete(ref_mat);
 
+% TODO: reduce single use vars
+% TODO: move to own function
+
 % get file property lists from reference
 ref_fid = H5F.open(ref_file, 'H5F_ACC_RDONLY', 'H5P_DEFAULT');
-ref_fid_cleanup = onCleanup(@() H5F.close(ref_fid));
 ref_fcpl = H5F.get_create_plist(ref_fid);
 
 % create new file (fail if exists)
 out_fcpl = H5P.copy(ref_fcpl);
-out_fid = H5F.create(path, 'H5F_ACC_EXCL', out_fcpl, 'H5P_DEFAULT');
-out_fid_cleanup = onCleanup(@() H5F.close(out_fid));
+out_fid = H5F.create(out_file, 'H5F_ACC_EXCL', out_fcpl, 'H5P_DEFAULT');
 
 % copy over datasets (a.k.a., variables), applying chunking as needed
 for ii = 1:length(varargin)
@@ -66,13 +67,19 @@ for ii = 1:length(varargin)
     
 end
 
+H5F.close(ref_fid);
 H5F.close(out_fid);
 
-keyboard
+% copy over the userblock
+% read userblock from reference
+% note: the userblock is a binary header prefixed to the file, and is opaque to the HDF5
+%   library. It is also essential for MATLAB to believe us that this is a valid MAT file.
+ref_userblock = H5P.get_userblock(ref_fcpl);
+ref_map = memmapfile(ref_file);
+out_map = memmapfile(out_file, 'Writable', true);
+out_map.Data(1:ref_userblock) = ref_map.Data(1:ref_userblock);
 
-mat = matfile(path, 'Writable', true);  % FAILS, but why?
-
-
+mat = matfile(out_file, 'Writable', true);
 
 
 function h5repack(file_obj, vars)
