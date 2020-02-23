@@ -2,6 +2,8 @@
 
 **Create new MAT-files optimized for partial reading and writing of large arrays.**
 
+See the demo at: http://www.allnans.com/newmatic/newmatic_demo.html
+
 This tool solves a few problems I ran into when using
 [matfile](https://www.mathworks.com/help/matlab/ref/matlab.io.matfile.html),
 namely:
