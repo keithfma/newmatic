@@ -16,16 +16,63 @@ function mat = newmatic(path, varargin)
 validateattributes(path, {'char'}, {'nonempty'});
 assert(~isfile(path), 'newmatic:OverwriteError', 'Output file exists!');
 
-mat = matfile(path, 'Writable', true);
+% filename for reference .mat, deleted on function exit
+ref_file = [tempname, '.mat'];
+ref_file_cleanup = onCleanup(@() delete(ref_file));
 
-
+ref_mat = matfile(ref_file, 'Writable', true);
 for ii = 1:length(varargin)
     var = varargin{ii};
-    allocate(mat, var.name, var.type, var.size);
+    allocate(ref_mat, var.name, var.type, var.size);
+end
+delete(ref_mat);
 
+% get file property lists from reference
+ref_fid = H5F.open(ref_file, 'H5F_ACC_RDONLY', 'H5P_DEFAULT');
+ref_fid_cleanup = onCleanup(@() H5F.close(ref_fid));
+ref_fcpl = H5F.get_create_plist(ref_fid);
+
+% create new file (fail if exists)
+out_fcpl = H5P.copy(ref_fcpl);
+out_fid = H5F.create(path, 'H5F_ACC_EXCL', out_fcpl, 'H5P_DEFAULT');
+out_fid_cleanup = onCleanup(@() H5F.close(out_fid));
+
+% copy over datasets (a.k.a., variables), applying chunking as needed
+for ii = 1:length(varargin)
+    var = varargin{ii};
+    
+    ref_ds_id = H5D.open(ref_fid, var.name);
+    ref_ds_type = H5D.get_type(ref_ds_id);
+    ref_ds_space = H5D.get_space(ref_ds_id);
+    ref_ds_cpl = H5D.get_create_plist(ref_ds_id);
+    
+    out_ds_id = H5D.create(out_fid, var.name, ref_ds_type, ref_ds_space, ref_ds_cpl);
+    
+    % note: assume that only this one attribute exists (cribbed from manual inspection of files
+    %   created by matfile function)
+    ref_attr_id = H5A.open(ref_ds_id, 'MATLAB_class');
+    ref_attr_type = H5A.get_type(ref_attr_id);
+    ref_attr_space = H5A.get_space(ref_attr_id);
+    ref_attr_data = H5A.read(ref_attr_id);
+    
+    out_attr_id = H5A.create(out_ds_id, 'MATLAB_class', ref_attr_type, ref_attr_space, 'H5P_DEFAULT');
+    H5A.write(out_attr_id, 'H5ML_DEFAULT', ref_attr_data);
+    
+    H5A.close(ref_attr_id);
+    H5D.close(ref_ds_id);
+    
+    H5A.close(out_attr_id);
+    H5D.close(out_ds_id);
+    
 end
 
-h5repack(mat, varargin);  % TODO: replace with native version when ready
+H5F.close(out_fid);
+
+keyboard
+
+mat = matfile(path, 'Writable', true);  % FAILS, but why?
+
+
 
 
 function h5repack(file_obj, vars)
