@@ -25,3 +25,32 @@ includes utilities for working with HDF5 files directly (i.e., without any
 external tools). `newmatic` provides an alternative interface for creating
 "customized" MAT-files that perform well for partial IO. 
 
+Additional notes:
+
++ `newmatic` only allocates arrays. If you want to include other data types
+  (strings, cell arrays, whatever), you can add them to the file created by
+  `newmatic` in the usual way. 
++ This initial version of `newmatic` depends on the system CLI
+  [h5repack](https://support.hdfgroup.org/HDF5/doc/RM/Tools.html#Tools-Repack), 
+  a future update will drop this dependency in favor of the native MATLAB hdf5
+  interface.
+
+## Example Usage
+
+There are two key functions in this package:
+
++ `newmatic_variable` is used to define the name, data type, array size, and
+  chunk size for variables created by `newmatic`
++ `newmatic` creates a MAT-file with the specified variables
+
+Here is a small example demonstrating how to create a MAT-file with two arrays
+(created by `newmatic`) and a cell array (not created by `newmatic`).
+
+```
+mat = newmatic(...
+    'my-mat-file.mat', ...
+    newmatic_variable('x', 'double', [1000, 1000, 20], [1000, 1000, 1]), ...
+    newmatic_variable('y', 'double', [1000, 10, 10], [5000, 10, 10]));
+mat.z = {'a', 'cell', 'array'};
+
+```
