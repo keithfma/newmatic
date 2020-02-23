@@ -32,10 +32,6 @@ Additional notes:
 + `newmatic` only allocates arrays. If you want to include other data types
   (strings, cell arrays, whatever), you can add them to the file created by
   `newmatic` in the usual way. 
-+ This initial version of `newmatic` depends on the system CLI
-  [h5repack](https://support.hdfgroup.org/HDF5/doc/RM/Tools.html#Tools-Repack), 
-  a future update will drop this dependency in favor of the native MATLAB hdf5
-  interface.
 
 ## Example Usage
 
@@ -56,3 +52,8 @@ mat = newmatic(...
 mat.z = {'a', 'cell', 'array'};
 
 ```
+
+## References
+
+Special shout out to the [hdf5storage](https://github.com/frejanordsiek/hdf5storage) python package for
+helping me work out the details of making a MATLAB-compatible HDF5 file. 

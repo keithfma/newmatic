@@ -92,8 +92,8 @@ fprintf(<span class="string">'Native-complete, read: %.3f s\n'</span>, native_co
 
 <span class="comment">% get the file size</span>
 native_complete_file_size = dir(native_complete_file).bytes/1024/1024;
-</pre><pre class="codeoutput">Native-complete, write: 3.334 s
-Native-complete, read: 0.728 s
+</pre><pre class="codeoutput">Native-complete, write: 3.264 s
+Native-complete, read: 0.716 s
 </pre><h2 id="3">Partial read/write with native MATLAB tools</h2><p>Now let's try using native MATLAB matfile() to do read and write the data one image at a time (i.e., partial IO). This is the real use case we are interested in.</p><pre class="codeinput"><span class="comment">% get a temporary file name</span>
 native_partial_file = [tempname, <span class="string">'.mat'</span>];
 native_partial_cleanup = onCleanup(@() delete(native_partial_file));
@@ -124,8 +124,8 @@ fprintf(<span class="string">'Native-partial, read: %.3f s\n'</span>, native_par
 
 <span class="comment">% get the file size</span>
 native_partial_file_size = dir(native_partial_file).bytes/1024/1024;
-</pre><pre class="codeoutput">Native-partial, write: 52.339 s
-Native-partial, read: 4.126 s
+</pre><pre class="codeoutput">Native-partial, write: 52.359 s
+Native-partial, read: 3.698 s
 </pre><h2 id="4">Partial read/write with newmatic</h2><p>Now for the good stuff. Let's use <tt>newmatic</tt> to create our file, and then read and write the data one image at a time. We will choose a chunk size that neatly matches our planned access pattern (i.e, an image).</p><pre class="codeinput"><span class="comment">% get a temporary file name</span>
 newmatic_partial_file = [tempname, <span class="string">'.mat'</span>];
 newmatic_partial_cleanup = onCleanup(@() delete(newmatic_partial_file));
@@ -153,9 +153,8 @@ fprintf(<span class="string">'Newmatic-partial, read: %.3f s\n'</span>, newmatic
 
 <span class="comment">% get the file size</span>
 newmatic_partial_file_size = dir(newmatic_partial_file).bytes/1024/1024;
-</pre><pre class="codeoutput">h5repack -i /tmp/tp03fd088e_f895_4664_81d7_9d2275dd7f72.mat -o /tmp/tpf6e2a598_4fd5_430c_8baf_c2a1aac9cb0e.mat -l images:CHUNK=1x1000x2000
-Newmatic-partial, write: 2.888 s
-Newmatic-partial, read: 0.158 s
+</pre><pre class="codeoutput">Newmatic-partial, write: 2.987 s
+Newmatic-partial, read: 0.153 s
 </pre><h2 id="5">Complete read/write with newmatic</h2><p>To round out the comparison, let's read/write whole variables using newmatic</p><pre class="codeinput"><span class="comment">% get a temporary file name</span>
 newmatic_complete_file = [tempname, <span class="string">'.mat'</span>];
 newmatic_complete_cleanup = onCleanup(@() delete(newmatic_complete_file));
@@ -179,9 +178,8 @@ fprintf(<span class="string">'Newmatic-complete, read: %.3f s\n'</span>, newmati
 
 <span class="comment">% get the file size</span>
 newmatic_complete_file_size = dir(newmatic_complete_file).bytes/1024/1024;
-</pre><pre class="codeoutput">h5repack -i /tmp/tp1713a51c_f6d8_4f4c_8639_fca9af5e6594.mat -o /tmp/tp9943cc43_35e2_4cb4_aa30_a39d7a1c3386.mat -l images:CHUNK=1x1000x2000
-Newmatic-complete, write: 3.151 s
-Newmatic-complete, read: 0.709 s
+</pre><pre class="codeoutput">Newmatic-complete, write: 3.183 s
+Newmatic-complete, read: 0.715 s
 </pre><h2 id="6">Comparison</h2><p>To make the comparison a bit easier, check out the tabulated results below:</p><pre class="codeinput">results = table(<span class="keyword">...</span>
     round([native_complete_write_time; newmatic_complete_write_time; native_partial_write_time; newmatic_partial_write_time], 2), <span class="keyword">...</span>
     round([native_complete_read_time; newmatic_complete_read_time; native_partial_read_time; newmatic_partial_read_time], 2), <span class="keyword">...</span>
@@ -193,10 +191,10 @@ disp(results);
 </pre><pre class="codeoutput">                         write-time-seconds    read-time-seconds    file-size-MB
                          __________________    _________________    ____________
 
-    native-complete             3.33                 0.73               95.53   
-    newmatic-complete           3.15                 0.71               95.53   
-    native-partial             52.34                 4.13              116.33   
-    newmatic-partial            2.89                 0.16               95.82   
+    native-complete             3.26                 0.72               95.53   
+    newmatic-complete           3.18                 0.72               95.53   
+    native-partial             52.36                  3.7              116.33   
+    newmatic-partial            2.99                 0.15                95.4   
 
 </pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
