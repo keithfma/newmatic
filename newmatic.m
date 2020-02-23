@@ -47,7 +47,9 @@ for ii = 1:length(varargin)
     ref_ds_space = H5D.get_space(ref_ds_id);
     ref_ds_cpl = H5D.get_create_plist(ref_ds_id);
     
-    out_ds_id = H5D.create(out_fid, var.name, ref_ds_type, ref_ds_space, ref_ds_cpl);
+    out_ds_cpl = H5P.copy(ref_ds_cpl);
+    H5P.set_chunk(out_ds_cpl, flip(var.chunks))
+    out_ds_id = H5D.create(out_fid, var.name, ref_ds_type, ref_ds_space, out_ds_cpl);
     
     % note: assume that only this one attribute exists (cribbed from manual inspection of files
     %   created by matfile function)

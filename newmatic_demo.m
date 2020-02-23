@@ -31,7 +31,7 @@
 
 num_row = 2000;
 num_col = 1000;
-num_img = 500;
+num_img = 5;
 
 images = randi(255, num_row, num_col, num_img, 'uint8');
 
