@@ -48,7 +48,9 @@ for ii = 1:length(varargin)
     ref_ds_cpl = H5D.get_create_plist(ref_ds_id);
     
     out_ds_cpl = H5P.copy(ref_ds_cpl);
-    H5P.set_chunk(out_ds_cpl, flip(var.chunks))
+    if ~isempty(var.chunks)
+        H5P.set_chunk(out_ds_cpl, flip(var.chunks))
+    end
     out_ds_id = H5D.create(out_fid, var.name, ref_ds_type, ref_ds_space, out_ds_cpl);
     
     % note: assume that only this one attribute exists (cribbed from manual inspection of files
@@ -132,6 +134,7 @@ function allocate(file_obj, var_name, data_type, dimensions)
 %   var_name: string, name of variable to allocate in matfile
 %   dimensions: 1D array, size of variable to allocate
 % %
+if isempty(dimensions); dimensions = [1, 1]; end 
 
 switch data_type
     
@@ -155,11 +158,6 @@ switch data_type
         error('Bad value for data_type: %s', data_type);
 end
 
-if ~isempty(dimensions) 
-    file_obj.(var_name) = empty(zeros(size(dimensions)));
-    dimensions = num2cell(dimensions);
-    file_obj.(var_name)(dimensions{:}) = last;
-else
-    % handle unspecified size by creating an empty array of the correct type
-    file_obj.(var_name) = empty();
-end
+file_obj.(var_name) = empty(zeros(size(dimensions)));
+dimensions = num2cell(dimensions);
+file_obj.(var_name)(dimensions{:}) = last;
