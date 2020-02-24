@@ -134,3 +134,14 @@ function test_input_validation(testCase)
     fclose(fopen(fname, 'w'));  % create file by touching it
     assertError(testCase, @() newmatic(fname, a_var), 'newmatic:OverwriteError');
 end
+
+
+function test_preserve_logical_dtype(testCase)
+    fname = testCase.TestData.filename;
+    mat = newmatic(fname, newmatic_variable('x', 'logical', [100, 200], [50, 100]));
+    mat.x(:, :) = false(100, 200);
+    
+    % data read back from file should still be logical
+    assertClass(testCase, mat.x, 'logical');
+end
+    
