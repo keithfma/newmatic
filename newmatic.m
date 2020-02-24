@@ -35,7 +35,7 @@ ref_fcpl = H5F.get_create_plist(ref_fid);
 out_fcpl = H5P.copy(ref_fcpl);
 out_fid = H5F.create(out_file, 'H5F_ACC_EXCL', out_fcpl, 'H5P_DEFAULT');
 
-% copy over datasets (a.k.a., variables), applying chunking as needed
+% copy datasets (a.k.a., variables), applying chunking as needed
 for ii = 1:length(varargin)
     var = varargin{ii};
     
@@ -53,18 +53,23 @@ for ii = 1:length(varargin)
         H5D.get_space(ref_ds_id), ...
         out_ds_cpl);
     
-    % note: assume that only this one attribute exists (cribbed from manual inspection of files
-    %   created by matfile function)
-    ref_attr_id = H5A.open(ref_ds_id, 'MATLAB_class');
+    % copy dataset attributes
+    ref_ds_info = H5O.get_info(ref_ds_id);
     
-    out_attr_id = H5A.create(...
-        out_ds_id, ...
-        'MATLAB_class', ...
-        H5A.get_type(ref_attr_id), ...
-        H5A.get_space(ref_attr_id), ...
-        'H5P_DEFAULT');
-    H5A.write(out_attr_id, 'H5ML_DEFAULT', H5A.read(ref_attr_id));
+    for ref_attr_idx = 0:ref_ds_info.num_attrs - 1
+       
+        ref_attr_id = H5A.open_by_idx(...
+            ref_fid, var.name, 'H5_INDEX_NAME', 'H5_ITER_DEC', ref_attr_idx);
     
+        out_attr_id = H5A.create(...
+            out_ds_id, ...
+            H5A.get_name(ref_attr_id), ...
+            H5A.get_type(ref_attr_id), ...
+            H5A.get_space(ref_attr_id), ...
+            'H5P_DEFAULT');
+        H5A.write(out_attr_id, 'H5ML_DEFAULT', H5A.read(ref_attr_id));
+    end
+        
     H5A.close(ref_attr_id);
     H5A.close(out_attr_id);
 
