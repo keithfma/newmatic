@@ -60,7 +60,8 @@ native_complete_read_time = toc;
 fprintf('Native-complete, read: %.3f s\n', native_complete_read_time);
 
 % get the file size
-native_complete_file_size = dir(native_complete_file).bytes/1024/1024;
+native_complete_file_obj = dir(native_complete_file);
+native_complete_file_size = native_complete_file_obj.bytes/1024/1024;
 
 
 %% Partial read/write with native MATLAB tools
@@ -97,7 +98,8 @@ native_partial_read_time = toc;
 fprintf('Native-partial, read: %.3f s\n', native_partial_read_time);
 
 % get the file size
-native_partial_file_size = dir(native_partial_file).bytes/1024/1024;
+native_partial_file_obj = dir(native_partial_file);
+native_partial_file_size = native_partial_file_obj.bytes/1024/1024;
 
 
 %% Partial read/write with newmatic
@@ -132,7 +134,8 @@ newmatic_partial_read_time = toc;
 fprintf('Newmatic-partial, read: %.3f s\n', newmatic_partial_read_time);
 
 % get the file size
-newmatic_partial_file_size = dir(newmatic_partial_file).bytes/1024/1024;
+newmatic_partial_file_obj = dir(newmatic_partial_file);
+newmatic_partial_file_size = newmatic_partial_file_obj.bytes/1024/1024;
 
 
 %% Complete read/write with newmatic
@@ -161,7 +164,8 @@ newmatic_complete_read_time = toc;
 fprintf('Newmatic-complete, read: %.3f s\n', newmatic_complete_read_time);
 
 % get the file size
-newmatic_complete_file_size = dir(newmatic_complete_file).bytes/1024/1024;
+newmatic_complete_file_obj = dir(newmatic_complete_file);
+newmatic_complete_file_size = newmatic_complete_file_obj.bytes/1024/1024;
 
 
 %% Comparison
