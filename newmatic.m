@@ -89,6 +89,7 @@ ref_userblock = H5P.get_userblock(ref_fcpl);
 ref_map = memmapfile(ref_file);
 out_map = memmapfile(out_file, 'Writable', true);
 out_map.Data(1:ref_userblock) = ref_map.Data(1:ref_userblock);
+clear ref_map;
 
 mat = matfile(out_file, 'Writable', true);
 
